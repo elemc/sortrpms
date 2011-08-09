@@ -1,0 +1,1 @@
+This is simple script for automated sorting and move/copy RPM packages from one dir to repo tree with exec createrepo.
