@@ -13,7 +13,6 @@ import shutil
 
 sourcedir               = "/srv/repos/incoming-pkgs"
 destdir                 = "/srv/repos"
-#destdir                 = "/home/alex/temp/mega-pupa-repos"
 fedoradir_name          = "fedora"
 epeldir_name            = "el"
 debuginfo_dir           = 'debug'
@@ -21,7 +20,7 @@ srpm_dir                = 'SRPMS'
 arch_includes_debuginfo = True
 arches                  = ['i386', 'x86_64']
 create_repo_cmd         = 'createrepo -x debug/* %s > /dev/null'
-remove_source_files     = False
+remove_source_files     = True
 
 EL_DISTR                = 'epel'
 FEDORA_DISTR            = 'fedora'
@@ -99,11 +98,17 @@ class RPM:
 class SortRPMs:
     def __init__(self):
         _new_files = self.get_new_files()
-        self.packages = self.parse_files(_new_files)
+        self.packages = None
+        if len(_new_files) > 0:
+            self.packages = self.parse_files(_new_files)
 
     def __del__(self):
-        #self.packages.clear()
         pass
+
+    def is_empty(self):
+        if self.packages is None:
+            return True
+        return False
 
     def get_new_files(self):
         if (not os.path.exists(sourcedir)) or (not os.path.isdir(sourcedir)):
@@ -149,7 +154,7 @@ class SortRPMs:
         # add distr path
         if pkg.distr == FEDORA_DISTR:
             dest_path = pathjoin(dest_path, fedoradir_name)
-        elif pkg.dist == EL_DISTR:
+        elif pkg.distr == EL_DISTR:
             dest_path = pathjoin(dest_path, epeldir_name)
         else:
             self.debug('Package %s doesn\'t contain information about distributive' % pkg.filename)
@@ -237,6 +242,8 @@ class SortRPMs:
 
 if __name__ == "__main__":
     s = SortRPMs()
-    s.move_packages()
-    s.create_repo()
-    s.show()
+    if not s.is_empty():
+        s.move_packages()
+        s.create_repo()
+        s.show()
+
