@@ -11,17 +11,6 @@ import rpm
 from os.path import join as pathjoin
 import shutil
 
-sourcedir               = "/srv/repos/incoming-pkgs"
-destdir                 = "/srv/repos"
-fedoradir_name          = "fedora"
-epeldir_name            = "el"
-debuginfo_dir           = 'debug'
-srpm_dir                = 'SRPMS'
-arch_includes_debuginfo = True
-arches                  = ['i386', 'x86_64']
-create_repo_cmd         = 'createrepo -x debug/* %s > /dev/null'
-remove_source_files     = True
-
 EL_DISTR                = 'epel'
 FEDORA_DISTR            = 'fedora'
 ARCH_FIX                = '$arch'
@@ -96,6 +85,18 @@ class RPM:
         return distr, distr_ver
 
 class SortRPMs:
+
+    sourcedir               = "/srv/repos/incoming-pkgs"
+    destdir                 = "/srv/repos"
+    fedoradir_name          = "fedora"
+    epeldir_name            = "el"
+    debuginfo_dir           = 'debug'
+    srpm_dir                = 'SRPMS'
+    arch_includes_debuginfo = True
+    arches                  = ['i386', 'x86_64']
+    create_repo_cmd         = 'createrepo -x debug/* %s > /dev/null'
+    remove_source_files     = True
+
     def __init__(self):
         _new_files = self.get_new_files()
         self.packages = None
@@ -111,11 +112,12 @@ class SortRPMs:
         return False
 
     def get_new_files(self):
-        if (not os.path.exists(sourcedir)) or (not os.path.isdir(sourcedir)):
+        print("Source dir: %s" % self.sourcedir)
+        if (not os.path.exists(self.sourcedir)) or (not os.path.isdir(self.sourcedir)):
             return list()
         
         rpm_list = []
-        for _rpm in os.listdir(sourcedir):
+        for _rpm in os.listdir(self.sourcedir):
             rpm_list.append(_rpm)
         return rpm_list
 
@@ -132,7 +134,7 @@ class SortRPMs:
 
         ts = rpm.TransactionSet()
         for _rpm in files_list:
-            fn = os.path.join(sourcedir, _rpm)
+            fn = os.path.join(self.sourcedir, _rpm)
             fdno = os.open(fn, os.O_RDONLY)
             hdr = ts.hdrFromFdno(fdno)
             os.close(fdno)
@@ -149,13 +151,13 @@ class SortRPMs:
         print("DEBUG: %s" % msg)
 
     def _get_dest_path(self, pkg):
-        dest_path = destdir
+        dest_path = self.destdir
 
         # add distr path
         if pkg.distr == FEDORA_DISTR:
-            dest_path = pathjoin(dest_path, fedoradir_name)
+            dest_path = pathjoin(dest_path, self.fedoradir_name)
         elif pkg.distr == EL_DISTR:
-            dest_path = pathjoin(dest_path, epeldir_name)
+            dest_path = pathjoin(dest_path, self.epeldir_name)
         else:
             self.debug('Package %s doesn\'t contain information about distributive' % pkg.filename)
             return None
@@ -168,19 +170,19 @@ class SortRPMs:
         dest_path = pathjoin(dest_path, pkg.distr_ver)
 
         # add arch path
-        if pkg.is_debuginfo() and not arch_includes_debuginfo:
-            dest_path = pathjoin(dest_path, debuginfo_dir)
+        if pkg.is_debuginfo() and not self.arch_includes_debuginfo:
+            dest_path = pathjoin(dest_path, self.debuginfo_dir)
             return dest_path
 
         if pkg.is_srpm():
-            dest_path = pathjoin(dest_path, srpm_dir)
+            dest_path = pathjoin(dest_path, self.srpm_dir)
         elif pkg.arch == 'noarch':                          # this package need do copy in all archs
             dest_path = pathjoin(dest_path, ARCH_FIX)
         else:
             dest_path = pathjoin(dest_path, pkg.arch)
 
         if pkg.is_debuginfo():
-            dest_path = pathjoin(dest_path, debuginfo_dir)
+            dest_path = pathjoin(dest_path, self.debuginfo_dir)
 
         return dest_path
 
@@ -206,21 +208,21 @@ class SortRPMs:
             return
         self.dirs_for_updaterepo = []
         for pkg in self.packages:
-            src_file = pathjoin(sourcedir, pkg.filename)
+            src_file = pathjoin(self.sourcedir, pkg.filename)
             if ARCH_FIX in pkg.dest_path:
                 haserror = False
-                for a in arches:
+                for a in self.arches:
                     temp_dest = pkg.dest_path.replace(ARCH_FIX, a)
                     try:
                         self._move_file(src_file, temp_dest, 'copy')
                     except:
                         haserror = True
-                if not haserror and remove_source_files:
+                if not haserror and self.remove_source_files:
                     os.unlink(src_file)
             else:
                 try:
                     tocopy = None
-                    if not remove_source_files:
+                    if not self.remove_source_files:
                         tocopy = 'copy'
                     self._move_file(src_file, pkg.dest_path, tocopy)
                 except:
@@ -230,7 +232,7 @@ class SortRPMs:
 
     def create_repo(self):
         for repo in self.dirs_for_updaterepo:
-            exit_status = os.system(create_repo_cmd % repo)
+            exit_status = os.system(self.create_repo_cmd % repo)
             if exit_status != 0:
                 self.debug("createrepo on %s failed." % repo)
 
