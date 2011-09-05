@@ -118,7 +118,7 @@ class SortRPMs:
         
         rpm_list = []
         for _rpm in os.listdir(self.sourcedir):
-            if _rpm[:3].lower() == 'rpm':
+            if _rpm[-3:].lower() == 'rpm':
                 rpm_list.append(_rpm)
         return rpm_list
 
