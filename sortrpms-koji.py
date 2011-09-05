@@ -31,7 +31,10 @@ class SortKojiRPMs(SortRPMs):
         # third                 - release
         dest_path = pathjoin(dest_path, pkg.release)
         # last                  - arch
-        dest_path = pathjoin(dest_path, pkg.arch)
+        if pkg.is_srpm():
+            dest_path = pathjoin(dest_path, 'src')
+        else:
+            dest_path = pathjoin(dest_path, pkg.arch)
         
         return dest_path
 

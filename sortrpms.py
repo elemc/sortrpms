@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+0;115;0cOBO#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =========================================== #
 # Python script to sort and move RPM packages #
@@ -118,7 +118,8 @@ class SortRPMs:
         
         rpm_list = []
         for _rpm in os.listdir(self.sourcedir):
-            rpm_list.append(_rpm)
+            if _rpm[:3].lower() == 'rpm':
+                rpm_list.append(_rpm)
         return rpm_list
 
     def _parse_hdr(self, hdr, filename):
