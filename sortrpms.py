@@ -1,4 +1,4 @@
-0;115;0cOBO#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # =========================================== #
 # Python script to sort and move RPM packages #
